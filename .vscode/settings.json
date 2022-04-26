@@ -6,5 +6,8 @@
     "python.formatting.provider": "black",
     "python.languageServer": "Pylance",
     "python.analysis.indexing": true,
-    "python.linting.mypyPath": ".venv/bin/mypy"
+    "python.linting.mypyPath": ".venv/bin/mypy",
+    "python.linting.flake8Path": ".venv/bin/flake8",
+    "python.formatting.blackPath": ".venv/bin/black",
+    "editor.formatOnSave": true,
 }
