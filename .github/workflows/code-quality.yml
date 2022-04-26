@@ -1,0 +1,13 @@
+name: Code Quality
+on: [push]
+
+jobs:
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Python Poetry Action
+        uses: abatilo/actions-poetry@v2.1.3
+      - run: poetry install
+      - run: poetry run mypy *.py
