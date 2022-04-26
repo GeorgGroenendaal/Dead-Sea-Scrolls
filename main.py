@@ -1,4 +1,4 @@
-from hello import greeting
+from src.hello import greeting
 
 
 if __name__ == "__main__":
