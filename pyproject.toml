@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "dead-sea-scrolls"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+mypy = "^0.931"
+black = "^22.1.0"
+isort = "^5.10.1"
+flake8 = "^4.0.1"
+
+[tool.mypy]
+disallow_untyped_defs=true
+disallow_incomplete_defs=true
+no_implicit_optional=true
+
+[tool.isort]
+profile = "black"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
