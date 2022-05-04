@@ -1,0 +1,2 @@
+data/raw/characters.tar.gz filter=lfs diff=lfs merge=lfs -text
+data/raw/image-data.zip filter=lfs diff=lfs merge=lfs -text
