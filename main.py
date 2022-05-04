@@ -13,7 +13,8 @@ def cli(debug: bool) -> None:
 def prepare() -> None:
     click.echo("Unzipping data")
     unzip_all("data/raw/image-data.zip", "data/unpacked")
-    unzip_all("data/raw/characters.zip", "data/unpacked/characters")
+    unzip_all("data/raw/characters.zip", "data/unpacked")
+    click.echo("Done")
 
 
 if __name__ == "__main__":
