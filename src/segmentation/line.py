@@ -1,4 +1,4 @@
-from functools import cached_property
+from re import A
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
@@ -10,7 +10,7 @@ from src.utils.cache import memory
 
 
 GrayScaleImage = npt.NDArray[np.uint8]
-TraceMap = npt.NDArray[np.bool_]
+Tracers = npt.NDArray[np.uint32]
 
 
 class LineSegmenter:
@@ -44,6 +44,20 @@ class LineSegmenter:
         if self.save_intermediate:
             logger.debug(f"Storing intermediate blurred image {name}")
             store_image(blurred_image, f"data/intermediate/blurred/{name}.jpg", "gray")
+            store_image(
+                blurred_image[:, ::-1],
+                f"data/intermediate/blurred/{name}_inverted.jpg",
+                "gray",
+            )
+
+        tracers = self._trace(blurred_image, blurred_height)
+        trace_image = self._trace_to_image(tracers)
+
+        store_image(
+            image + trace_image,
+            f"data/intermediate/trace/{name}.png",
+            "gray",
+        )
 
     def _blur(
         self, image: GrayScaleImage, blurred_width: int, blurred_height: int
@@ -62,7 +76,36 @@ class LineSegmenter:
 
         return heights
 
-    def _trace(self, blurred_image: GrayScaleImage, blurred_height: int) -> TraceMap:
-        map = np.zeros_like(blurred_image, dtype=np.bool_)
+    def _trace(self, blurred_image: GrayScaleImage, blurred_height: int) -> Tracers:
+        height, width = blurred_image.shape
+        tracers = np.zeros_like(blurred_image, dtype=np.uint32)
+        tracers[:, 0] = np.arange(height)
 
-        return map
+        offset = blurred_height // 2
+
+        for i in range(1, width):
+            previous = tracers[:, i - 1]
+
+            indices_up = np.clip(previous + offset, 0, height - 1)
+            indices_down = np.clip(previous - offset, 0, height - 1)
+
+            values_up = blurred_image[indices_up, i]
+            values_down = blurred_image[indices_down, i]
+
+            tracers[:, i] = np.where(values_up > values_down, previous - 1, previous)
+            tracers[:, i] = np.where(
+                values_up < values_down, previous + 1, tracers[:, i]
+            )
+
+        return tracers
+
+    def _trace_to_image(self, tracers: Tracers) -> npt.NDArray[np.bool_]:
+        height, width = tracers.shape
+        image = np.zeros_like(tracers, dtype=np.bool_)
+
+        for i in range(width):
+            indices = np.arange(height)
+            tracer_col = tracers[:, i]
+            image[:, i] = -1 * np.isin(indices, tracer_col)
+
+        return image
