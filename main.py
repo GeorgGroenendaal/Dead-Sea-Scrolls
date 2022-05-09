@@ -23,14 +23,19 @@ def prepare() -> None:
 
 @cli.command()
 @click.option("--save-intermediate/--no-save-intermediate", default=False)
-def segment(save_intermediate: bool) -> None:
-    binary_files = glob.glob("data/unpacked/image-data/*binarized.jpg")
+@click.option("--file", default=None)
+def segment(save_intermediate: bool, file: str | None) -> None:
     line_segmenter = LineSegmenter(save_intermediate=save_intermediate)
 
-    logger.info("Starting line segmentation")
-
-    for file in tqdm(binary_files):
+    if file:
+        logger.info(f"Starting line segmentation on {file}")
         line_segmenter.segment_lines(file)
+    else:
+        logger.info("Starting line segmentation on all binarized images")
+        binary_files = glob.glob("data/unpacked/image-data/*binarized.jpg")
+
+        for b_file in tqdm(binary_files):
+            line_segmenter.segment_lines(b_file)
 
 
 if __name__ == "__main__":

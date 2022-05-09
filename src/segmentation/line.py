@@ -1,16 +1,14 @@
-from re import A
-import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
+from PIL import Image
 from scipy import ndimage
 
+from src.utils.cache import memory
 from src.utils.images import get_name, store_image
 from src.utils.logger import logger
-from src.utils.cache import memory
-
 
 GrayScaleImage = npt.NDArray[np.uint8]
-Tracers = npt.NDArray[np.uint32]
+Tracers = npt.NDArray[np.int32]
 
 
 class LineSegmenter:
@@ -26,7 +24,7 @@ class LineSegmenter:
     def segment_lines(self, image_path: str) -> None:
         name = get_name(image_path)
 
-        image: GrayScaleImage = plt.imread(image_path)
+        image: GrayScaleImage = np.array(Image.open(image_path).convert("L"))
         binarized_image = image < self.binary_cutoff
 
         # component labeling and height finding
@@ -44,17 +42,12 @@ class LineSegmenter:
         if self.save_intermediate:
             logger.debug(f"Storing intermediate blurred image {name}")
             store_image(blurred_image, f"data/intermediate/blurred/{name}.jpg", "gray")
-            store_image(
-                blurred_image[:, ::-1],
-                f"data/intermediate/blurred/{name}_inverted.jpg",
-                "gray",
-            )
 
         tracers = self._trace(blurred_image, blurred_height)
         trace_image = self._trace_to_image(tracers)
 
         store_image(
-            image + trace_image,
+            np.invert(trace_image) | binarized_image,
             f"data/intermediate/trace/{name}.png",
             "gray",
         )
@@ -78,16 +71,15 @@ class LineSegmenter:
 
     def _trace(self, blurred_image: GrayScaleImage, blurred_height: int) -> Tracers:
         height, width = blurred_image.shape
-        tracers = np.zeros_like(blurred_image, dtype=np.uint32)
+        tracers = np.zeros_like(blurred_image, dtype=np.int32)
         tracers[:, 0] = np.arange(height)
 
         offset = blurred_height // 2
 
         for i in range(1, width):
             previous = tracers[:, i - 1]
-
-            indices_up = np.clip(previous + offset, 0, height - 1)
-            indices_down = np.clip(previous - offset, 0, height - 1)
+            indices_up = np.clip(previous - offset, 0, height - 1)
+            indices_down = np.clip(previous + offset, 0, height - 1)
 
             values_up = blurred_image[indices_up, i]
             values_down = blurred_image[indices_down, i]
@@ -106,6 +98,6 @@ class LineSegmenter:
         for i in range(width):
             indices = np.arange(height)
             tracer_col = tracers[:, i]
-            image[:, i] = -1 * np.isin(indices, tracer_col)
+            image[:, i] = np.invert(np.isin(indices, tracer_col))
 
         return image
