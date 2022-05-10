@@ -46,8 +46,13 @@ class LineSegmenter:
         tracers = self._trace(blurred_image, blurred_height)
         trace_image = self._trace_to_image(tracers)
 
+        blurred_image_inverted = self._horizontal_flip(blurred_image)
+        tracers_inverted = self._trace(blurred_image_inverted, blurred_height)
+        trace_image_inverted = self._trace_to_image(tracers_inverted)
+        trace_image_2 = self._horizontal_flip(trace_image_inverted)
+
         store_image(
-            np.invert(trace_image) | binarized_image,
+            np.invert(trace_image) | np.invert(trace_image_2) | binarized_image,
             f"data/intermediate/trace/{name}.png",
             "gray",
         )
@@ -101,3 +106,6 @@ class LineSegmenter:
             image[:, i] = np.invert(np.isin(indices, tracer_col))
 
         return image
+
+    def _horizontal_flip(self, arr: np.ndarray) -> np.ndarray:
+        return arr[:, ::-1]
