@@ -23,7 +23,7 @@
             "args": [
                 "segment",
                 "--file",
-                "/workspaces/Dead-Sea-Scrolls/data/unpacked/image-data/xxx.png",
+                "/workspaces/Dead-Sea-Scrolls/data/unpacked/image-data/P168-Fg016-R-C01-R01-binarized.jpg",
                 "--save-intermediate"
             ],
             "console": "integratedTerminal",
