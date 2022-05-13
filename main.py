@@ -1,7 +1,7 @@
 import glob
 
 import click
-from tqdm import tqdm
+from tqdm.contrib.concurrent import process_map
 
 from src.segmentation.line import LineSegmenter
 from src.utils.logger import logger
@@ -34,8 +34,8 @@ def segment(save_intermediate: bool, file: str | None) -> None:
         logger.info("Starting line segmentation on all binarized images")
         binary_files = glob.glob("data/unpacked/image-data/*binarized.jpg")
 
-        for b_file in tqdm(binary_files):
-            line_segmenter.segment_lines(b_file)
+        # concurrent processing
+        process_map(line_segmenter.segment_lines, binary_files)
 
 
 if __name__ == "__main__":

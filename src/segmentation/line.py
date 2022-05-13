@@ -53,35 +53,50 @@ class LineSegmenter:
         trace_mask_flipped = self._trace_to_mask(tracers_flipped)
         trace_mask_lr = self._horizontal_flip(trace_mask_flipped)
 
-        trace_mask_combined = trace_mask_lr & trace_mask_rl
+        trace_mask_combined = trace_mask_rl & trace_mask_lr
 
         filtered_components = self._filter_component_by_area(
             trace_mask_combined, line_height=mean_component_height
         )
 
-        store_image(
-            np.invert(filtered_components) | binarized_image,
-            f"data/intermediate/trace/{name}.png",
-            "gray",
-        )
+        final = filtered_components * binarized_image
+
+        if self.save_intermediate:
+            store_image(
+                filtered_components - final,
+                f"data/intermediate/final/{name}.png",
+                "gist_rainbow",
+            )
+
+        for i, loc in enumerate(ndimage.find_objects(final)):
+            if loc:
+                # the bounding box may include other segments, == i+1 isolates the one segment
+                segment = final[loc] == i + 1
+
+                store_image(
+                    segment,
+                    f"data/out/segments/{name}/segment_{i}.png",
+                    "gray",
+                )
+
+    def _invert_grayschale_image(self, image: GrayScaleImage) -> GrayScaleImage:
+        return np.uint8(255) - image
 
     def _filter_component_by_area(
         self, mask: npt.NDArray[np.bool_], line_height: float
-    ) -> npt.NDArray[np.bool_]:
+    ) -> npt.NDArray[np.int32]:
 
-        cutoff_area = line_height**2  # from the paper it is 2
-        cutoff_height = line_height * 2  # we added this
+        cutoff_area = line_height**3  # from the paper it is 2
         components, _ = ndimage.label(mask)
 
         for loc in ndimage.find_objects(components):
             single_component = components[loc]
             area = np.count_nonzero(single_component)
-            height = np.max(np.count_nonzero(single_component, 0))
 
-            if area < cutoff_area or height < cutoff_height:
+            if area < cutoff_area:
                 components[loc] = 0
 
-        return components > 0
+        return components
 
     def _blur(
         self, image: GrayScaleImage, blurred_width: int, blurred_height: int

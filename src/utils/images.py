@@ -1,7 +1,8 @@
 import pathlib
 from typing import Literal
-from matplotlib import pyplot as plt
+
 import numpy as np
+from matplotlib import pyplot as plt
 
 Cmap = Literal["gray", "gist_rainbow"]
 
