@@ -29,7 +29,7 @@ class LineSegmenter:
             400,
             "constant",
             constant_values=255,
-        )
+        )  # we add padding as it allows us to better work with lines that go all the way to border
 
         binarized_image = image < self.binary_cutoff
 
