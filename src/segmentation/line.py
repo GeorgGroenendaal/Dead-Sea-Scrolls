@@ -24,7 +24,13 @@ class LineSegmenter:
     def segment_lines(self, image_path: str) -> None:
         name = get_name(image_path)
 
-        image: GrayScaleImage = np.array(Image.open(image_path).convert("L"))
+        image: GrayScaleImage = np.pad(
+            np.array(Image.open(image_path).convert("L")),
+            400,
+            "constant",
+            constant_values=255,
+        )
+
         binarized_image = image < self.binary_cutoff
 
         # component labeling and height finding
@@ -86,7 +92,7 @@ class LineSegmenter:
         self, mask: npt.NDArray[np.bool_], line_height: float
     ) -> npt.NDArray[np.int32]:
 
-        cutoff_area = line_height**3  # from the paper it is 2
+        cutoff_area = line_height**2  # from the paper it is 2
         components, _ = ndimage.label(mask)
 
         for loc in ndimage.find_objects(components):
