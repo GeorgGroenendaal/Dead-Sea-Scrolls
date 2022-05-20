@@ -3,7 +3,7 @@
 
 ## Prerequisites
 
-- Python >= 3.10
+- Python ^3.8 and < 3.11
 - [Poetry](https://python-poetry.org/) for dependencies
 
 For development
