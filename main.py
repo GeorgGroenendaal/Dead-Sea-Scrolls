@@ -1,4 +1,5 @@
 import glob
+from typing import Union
 
 import click
 from tqdm.contrib.concurrent import process_map
@@ -24,7 +25,7 @@ def prepare() -> None:
 @cli.command()
 @click.option("--save-intermediate/--no-save-intermediate", default=False)
 @click.option("--file", default=None)
-def segment(save_intermediate: bool, file: str | None) -> None:
+def segment(save_intermediate: bool, file: Union[str, None]) -> None:
     line_segmenter = LineSegmenter(save_intermediate=save_intermediate)
 
     if file:

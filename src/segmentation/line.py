@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 import numpy.typing as npt
 from PIL import Image
@@ -109,8 +111,8 @@ class LineSegmenter:
     ) -> GrayScaleImage:
         return ndimage.gaussian_filter(image, (blurred_height, blurred_width))
 
-    def _component_heights(self, labeled_components: np.ndarray) -> list[int]:
-        heights: list[int] = []
+    def _component_heights(self, labeled_components: np.ndarray) -> List[int]:
+        heights: List[int] = []
 
         for loc in ndimage.find_objects(labeled_components):
             single_component = labeled_components[loc] != 0
@@ -152,5 +154,5 @@ class LineSegmenter:
 
         return mask
 
-    def _horizontal_flip(self, arr: np.ndarray) -> np.ndarray:
+    def _horizontal_flip(self, arr: npt.NDArray) -> npt.NDArray:
         return arr[:, ::-1]
