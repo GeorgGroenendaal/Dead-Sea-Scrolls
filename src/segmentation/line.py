@@ -13,6 +13,15 @@ GrayScaleImage = npt.NDArray[np.uint8]
 Tracers = npt.NDArray[np.int32]
 
 
+# This function is outside of class for better caching: 
+# https://joblib.readthedocs.io/en/latest/memory.html
+@memory.cache
+def _blur(
+    image: GrayScaleImage, blurred_width: int, blurred_height: int
+) -> GrayScaleImage:
+    return ndimage.gaussian_filter(image, (blurred_height, blurred_width))
+
+
 class LineSegmenter:
     """
     Line segmenter based on: Handwritten Text Line Segmentation by Shredding Text into its Lines.
@@ -43,10 +52,7 @@ class LineSegmenter:
         blurred_height = int(mean_component_height * 0.8)
 
         # performing blur, reusing cache if possible
-        cached_blur = memory.cache(self._blur)
-        blurred_image: GrayScaleImage = cached_blur(
-            image, blurred_width, blurred_height
-        )
+        blurred_image: GrayScaleImage = _blur(image, blurred_width, blurred_height)
 
         if self.save_intermediate:
             logger.debug(f"Storing intermediate blurred image {name}")
@@ -105,11 +111,6 @@ class LineSegmenter:
                 components[loc] = 0
 
         return components
-
-    def _blur(
-        self, image: GrayScaleImage, blurred_width: int, blurred_height: int
-    ) -> GrayScaleImage:
-        return ndimage.gaussian_filter(image, (blurred_height, blurred_width))
 
     def _component_heights(self, labeled_components: np.ndarray) -> List[int]:
         heights: List[int] = []
