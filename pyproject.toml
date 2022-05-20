@@ -21,6 +21,7 @@ black = "^22.1.0"
 isort = "^5.10.1"
 flake8 = "^4.0.1"
 types-Pillow = "^9.0.15"
+snakeviz = "^2.1.1"
 
 [tool.mypy]
 disallow_untyped_defs=true
