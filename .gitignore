@@ -129,6 +129,3 @@ dmypy.json
 .pyre/
 
 data/unpacked/
-data/intermediate/
-cache/
-data/out/
