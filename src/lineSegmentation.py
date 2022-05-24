@@ -1,44 +1,58 @@
-import matplotlib.pyplot as plt
+
+from pickletools import uint8
+from cv2 import CV_32S
 import numpy as np
+import cv2
 from scipy import ndimage
+import matplotlib.pyplot as plt
+from scipy.signal import find_peaks
 
-np.random.seed(1)
-n = 10
-l = 256
-# //im = np.zeros((l, l))
-# //points = l*np.random.random((2, n**2))
-# # im[(points[0]).astype(np.int), (points[1]).astype(np.int)] = 1
-# # im = ndimage.gaussian_filter(im, sigma=l/(4.*n))
-
-# mask = (im > im.mean()).astype(np.float)
-# mask += 0.1 * im
-
-img = plt.imread("C:/Users/mw0121921/Downloads/image-data/image-data/P123-Fg002-R-C01-R01-binarized.jpg");
-
-hist, bin_edges = np.histogram(img, bins="auto")
-bin_centers = 0.5*(bin_edges[:-1] + bin_edges[1:])
-
-horizontal_hist = img.shape[1] - np.sum(img,axis=1,keepdims=True)/255
-
-#binary_img = img > 0.5
-
-plt.figure(figsize=(11,4))
-
-plt.subplot(131)
+#read input image and invert the pixels: results in white text on black background
+#C:/Users/mw0121921/Downloads/image-data/image-data/P583-Fg006-R-C01-R01-binarized.jpg
+img = cv2.imread("img_out.jpg",cv2.IMREAD_GRAYSCALE)
+img = cv2.rotate(img, cv2.cv2.ROTATE_90_CLOCKWISE)
 plt.imshow(img)
-plt.axis('off')
-plt.subplot(132)
-#plt.plot(bin_centers, hist)
-plt.hist(img,bin="auto")
-plt.axvline(0.5, color='r', ls='--')
-plt.text(0.57, 0.8, 'histogram', fontsize=20, transform = plt.gca().transAxes)
-plt.yticks([])
-plt.subplot(133)
-plt.imshow(img, cmap=plt.cm.gray, interpolation='nearest')
-plt.axis('off')
-
-plt.subplots_adjust(wspace=0.02, hspace=0.3, top=1, bottom=0.1, left=0, right=1)
 plt.show()
+img = cv2.GaussianBlur(img,(5,5),cv2.BORDER_DEFAULT) 
+img = cv2.bitwise_not(img)
+
+# count pixels per row
+hist = cv2.reduce(img, 1, cv2.REDUCE_AVG).reshape(-1)
+
+print(hist)
+#mark white pixels in image and bounding boxes
+counter = 0
+imageCount = 0
+#roi = np.zeros(img.shape)
+for x in range(0,(img.shape[0]-1)):
+    if hist[x] > 100:
+        counter += 1
+    else:
+        if counter > 0:
+            roi = img[(x - counter):x,0:(img.shape[1] - 1)]
+            cv2.imwrite(str(imageCount)+".jpg", roi)
+            imageCount += 1
+        counter = 0
+                   
+# counter = 0 
+# image = str(counter) +".jpg" 
+# maxColumns = 4
+# maxRows = int(imageCount/maxColumns) + 1              
+# f, axarr = plt.subplots(maxColumns,maxRows)
+# col = 0
+# row = 0
+# while counter < imageCount:
+#     axarr[col,row].imshow(cv2.imread(image))
+#     counter += 1
+#     image = str(counter) +".jpg" 
+#     row += 1
+#     if row > (maxRows - 1):
+#         row = 0
+#     if (counter % maxColumns) == 0:
+#         col += 1
+# plt.show()
+
+
 
 
 
