@@ -112,6 +112,14 @@ test = ["invoke", "pytest", "pytest-cov", "fsspec"]
 tifffile = ["tifffile"]
 
 [[package]]
+name = "imutils"
+version = "0.5.4"
+description = "A series of convenience functions to make basic image processing functions such as translation, rotation, resizing, skeletonization, displaying Matplotlib images, sorting contours, detecting edges, and much more easier with OpenCV and both Python 2.7 and Python 3."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "isort"
 version = "5.10.1"
 description = "A Python utility / library to sort Python imports."
@@ -472,7 +480,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8,<3.11"
-content-hash = "fd041e104a4ba6af5148947ce3cd02062ab2a429e985e87d8ddeac86aa9b645f"
+content-hash = "6a3f4214f45fb9af88db117f8115b4077609bd6133c1591f58197de20372eb89"
 
 [metadata.files]
 black = [
@@ -523,6 +531,9 @@ fonttools = [
 imageio = [
     {file = "imageio-2.19.2-py3-none-any.whl", hash = "sha256:2c01611a90ac87119833946a41af53e55d68ec68e25e2780e6c3ce665100d006"},
     {file = "imageio-2.19.2.tar.gz", hash = "sha256:46e1e74128837d2a1ebc87476b7f73978b69a128fa238bc989b625a9819bd9b3"},
+]
+imutils = [
+    {file = "imutils-0.5.4.tar.gz", hash = "sha256:03827a9fca8b5c540305c0844a62591cf35a0caec199cb0f2f0a4a0fb15d8f24"},
 ]
 isort = [
     {file = "isort-5.10.1-py3-none-any.whl", hash = "sha256:6f62d78e2f89b4500b080fe3a81690850cd254227f27f75c3a0c491a1f351ba7"},

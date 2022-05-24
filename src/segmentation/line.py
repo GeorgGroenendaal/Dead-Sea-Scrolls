@@ -13,7 +13,7 @@ GrayScaleImage = npt.NDArray[np.uint8]
 Tracers = npt.NDArray[np.int32]
 
 
-# This function is outside of class for better caching: 
+# This function is outside of class for better caching:
 # https://joblib.readthedocs.io/en/latest/memory.html
 @memory.cache
 def _blur(
@@ -28,9 +28,9 @@ class LineSegmenter:
     (A. Nicolaou and B. Gatos) 2009
     """
 
-    def __init__(self, binary_cutoff: int = 127, save_intermediate: bool = False):
+    def __init__(self, binary_cutoff: int = 127, debug: bool = False):
         self.binary_cutoff = binary_cutoff
-        self.save_intermediate = save_intermediate
+        self.debug = debug
 
     def segment_lines(self, image_path: str) -> None:
         name = get_name(image_path)
@@ -54,7 +54,7 @@ class LineSegmenter:
         # performing blur, reusing cache if possible
         blurred_image: GrayScaleImage = _blur(image, blurred_width, blurred_height)
 
-        if self.save_intermediate:
+        if self.debug:
             logger.debug(f"Storing intermediate blurred image {name}")
             store_image(blurred_image, f"data/intermediate/blurred/{name}.jpg", "gray")
 
@@ -75,7 +75,7 @@ class LineSegmenter:
 
         final = filtered_components * binarized_image
 
-        if self.save_intermediate:
+        if self.debug:
             store_image(
                 filtered_components - final,
                 f"data/intermediate/final/{name}.png",
@@ -89,7 +89,7 @@ class LineSegmenter:
 
                 store_image(
                     segment,
-                    f"data/out/segments/{name}/segment_{i}.png",
+                    f"data/out/segments/lines/{name}/segment_{i}.png",
                     "gray",
                 )
 
