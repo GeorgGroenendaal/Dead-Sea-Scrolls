@@ -34,13 +34,22 @@ if __name__ == "__main__":
 
 
 # erode the image
-def erosion(image: np.ndarray, kernel_size: int, iterations: int)-> np.ndarray:
-    elements = cv2.getStructuringElement(cv2.MORPH_RECT, (2 * EROSION_SIZE + 1, 2 * EROSION_SIZE + 1), (EROSION_SIZE, EROSION_SIZE))
-    
+def erosion(image: np.ndarray, kernel_size: int, iterations: int) -> np.ndarray:
+    elements = cv2.getStructuringElement(
+        cv2.MORPH_RECT,
+        (2 * EROSION_SIZE + 1, 2 * EROSION_SIZE + 1),
+        (EROSION_SIZE, EROSION_SIZE),
+    )
+
     return cv2.erode(image, elements, iterations=iterations)
 
+
 # dilate the image
-def dilation(image: np.ndarray, kernel_size: int, iterations: int)-> np.ndarray:
-    elements = cv2.getStructuringElement(cv2.MORPH_RECT, (2 * DILATION_SIZE + 1, 2 * DILATION_SIZE + 1), (DILATION_SIZE, DILATION_SIZE))
-    
+def dilation(image: np.ndarray, kernel_size: int, iterations: int) -> np.ndarray:
+    elements = cv2.getStructuringElement(
+        cv2.MORPH_RECT,
+        (2 * DILATION_SIZE + 1, 2 * DILATION_SIZE + 1),
+        (DILATION_SIZE, DILATION_SIZE),
+    )
+
     return cv2.dilate(image, elements, iterations=iterations)
