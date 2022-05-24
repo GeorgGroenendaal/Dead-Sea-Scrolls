@@ -48,10 +48,24 @@
             "request": "launch",
             "program": "main.py",
             "args": [
-                "segment",
+                "linesegment",
                 "--file",
                 "/workspaces/Dead-Sea-Scrolls/data/unpacked/image-data/P168-Fg016-R-C01-R01-binarized.jpg",
-                "--save-intermediate"
+                "--debug"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Segment Characters: Single file",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "args": [
+                "charactersegment",
+                "--file",
+                "data/out/segments/lines/P123-Fg001-R-C01-R01-binarized/segment_4345.png",
+                "--debug"
             ],
             "console": "integratedTerminal",
             "justMyCode": true

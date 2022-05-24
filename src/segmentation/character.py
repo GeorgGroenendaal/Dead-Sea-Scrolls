@@ -34,7 +34,7 @@ class CharacterSegmenter:
         # distance map
         distance = ndimage.distance_transform_edt(thresh)
         localMax = peak_local_max(
-            distance, indices=False, min_distance=20, labels=thresh
+            distance, indices=False, min_distance=40, labels=thresh
         )
         # perform a connected component analysis on the local peaks,
         # using 8-connectivity, then appy the Watershed algorithm
@@ -46,7 +46,7 @@ class CharacterSegmenter:
 
         # loop over the unique labels returned by the Watershed
         # algorithm
-        for label in np.unique(labels):
+        for i, label in enumerate(np.unique(labels)):
             # if the label is zero, we are examining the 'background'
             # so simply ignore it
             if label == 0:
@@ -54,6 +54,7 @@ class CharacterSegmenter:
 
             mask = np.zeros(gray_image.shape, dtype=np.uint8)
             mask[labels == label] = 255
+
             # detect contours in the mask and grab the largest one
             cnts = cv2.findContours(
                 mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
@@ -64,6 +65,18 @@ class CharacterSegmenter:
             ((x, y), r) = cv2.minEnclosingCircle(c)
             cv2.circle(image, (int(x), int(y)), int(r), (0, 255, 0), 2)
 
+            circle_mask = np.zeros_like(gray_image, dtype=np.uint8)
+
+            x_min, x_max = int(x - r), int(x + r)
+            y_min, y_max = int(y - r), int(y + r)
+            circle_mask[y_min:y_max, x_min:x_max] = 1
+
+            result = gray_image * circle_mask
+
+            path = f"data/out/segments/characters/{name}_character_{i}.png"
+            parsed_path = pathlib.Path(path)
+            parsed_path.parents[0].mkdir(parents=True, exist_ok=True)
+            cv2.imwrite(path, result)
             # cv2.putText(image, "#{}".format(label), (int(x) - 10, int(y)),
             # cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
             # otherwise, allocate memory for the label region and draw
