@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 import numpy.typing as npt
 from PIL import Image
@@ -9,6 +11,15 @@ from src.utils.logger import logger
 
 GrayScaleImage = npt.NDArray[np.uint8]
 Tracers = npt.NDArray[np.int32]
+
+
+# This function is outside of class for better caching: 
+# https://joblib.readthedocs.io/en/latest/memory.html
+@memory.cache
+def _blur(
+    image: GrayScaleImage, blurred_width: int, blurred_height: int
+) -> GrayScaleImage:
+    return ndimage.gaussian_filter(image, (blurred_height, blurred_width))
 
 
 class LineSegmenter:
@@ -41,10 +52,7 @@ class LineSegmenter:
         blurred_height = int(mean_component_height * 0.8)
 
         # performing blur, reusing cache if possible
-        cached_blur = memory.cache(self._blur)
-        blurred_image: GrayScaleImage = cached_blur(
-            image, blurred_width, blurred_height
-        )
+        blurred_image: GrayScaleImage = _blur(image, blurred_width, blurred_height)
 
         if self.save_intermediate:
             logger.debug(f"Storing intermediate blurred image {name}")
@@ -104,13 +112,8 @@ class LineSegmenter:
 
         return components
 
-    def _blur(
-        self, image: GrayScaleImage, blurred_width: int, blurred_height: int
-    ) -> GrayScaleImage:
-        return ndimage.gaussian_filter(image, (blurred_height, blurred_width))
-
-    def _component_heights(self, labeled_components: np.ndarray) -> list[int]:
-        heights: list[int] = []
+    def _component_heights(self, labeled_components: np.ndarray) -> List[int]:
+        heights: List[int] = []
 
         for loc in ndimage.find_objects(labeled_components):
             single_component = labeled_components[loc] != 0
@@ -152,5 +155,5 @@ class LineSegmenter:
 
         return mask
 
-    def _horizontal_flip(self, arr: np.ndarray) -> np.ndarray:
+    def _horizontal_flip(self, arr: npt.NDArray) -> npt.NDArray:
         return arr[:, ::-1]

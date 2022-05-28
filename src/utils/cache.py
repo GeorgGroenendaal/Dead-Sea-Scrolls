@@ -1,3 +1,3 @@
 from joblib import Memory
 
-memory = Memory("cache/")
+memory = Memory("cache/", verbose=0)

@@ -5,6 +5,33 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "."
+            }
+        },
+        {
+            "name": "Python: Profile Current File",
+            "type": "python",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "module": "cProfile",
+            "env": {
+                "PYTHONPATH": "."
+            },
+            "args": [
+                "-o",
+                "/tmp/tmp.prof",
+                "${file}"
+            ]
+        },
+        {
             "name": "Python: Segment",
             "type": "python",
             "request": "launch",
