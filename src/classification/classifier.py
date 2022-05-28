@@ -1,6 +1,7 @@
+from random import seed
 import tensorflow as tf
-from tensorflow.keras import models, layers, optimizers, losses, metrics
-import matplotlib.pyplot as plt
+from tensorflow.keras import models, layers
+
 from tensorflow import keras
 from src.utils.logger import logger
 import pickle
@@ -13,11 +14,27 @@ from sklearn import preprocessing
 
 class Classifier:
     def __init__(
-        self, data_path: str, predicit: bool = False, predict_image: str = None
+        self,
+        predicit: bool = False,
+        predict_image: str = None,
+        train: bool = False,
     ) -> None:
-        self.data_path = data_path
-        self.x_train, self.x_test, self.y_train, self.y_test = self.load_data()
-        self.get_model()
+
+        self.data_path = "../../data/unpacked/characters"
+
+        if train:
+            self.x_train, self.x_test, self.y_train, self.y_test = self.load_data()
+            self.train_model()
+
+        if predicit:
+            self.get_model()
+            logger.info(f"Predicted label is {self.predict_from_path(predict_image)}")
+
+    def train_model(self):
+        self.create_model()
+        self.compile_model()
+        self.fit_model()
+        self.save_model()
 
     def get_model(self) -> None:
 
@@ -25,12 +42,8 @@ class Classifier:
             self.model = models.load_model("model.h5")
             logger.info("Model loaded")
         except:
-            logger.error("model not found")
-            self.model = self.create_model()
-            self.compile_model()
-            self.fit_model()
-            self.save_model()
-            logger.info("model saved")
+            logger.info("model not found, creating new model")
+            self.train_model()
 
     def create_model(self):
         model = models.Sequential(
@@ -47,7 +60,7 @@ class Classifier:
                 layers.Dense(27, activation="softmax"),
             ]
         )
-        return model
+        self.model = model
 
     def compile_model(self) -> None:
         self.model.compile(
