@@ -16,6 +16,8 @@ joblib = "^1.1.0"
 pandas = "^1.4.2"
 sklearn = "^0.0"
 tensorflow = "^2.9.0"
+imblearn = "^0.0"
+seaborn = "^0.11.2"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.950"
