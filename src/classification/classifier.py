@@ -12,6 +12,37 @@ from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 
 
+LABELS = [
+    "Alef",
+    "Ayin",
+    "Bet",
+    "Dalet",
+    "Gimel",
+    "He",
+    "Het",
+    "Kaf",
+    "Kaf-final",
+    "Lamed",
+    "Mem",
+    "Mem-medial",
+    "Nun-final",
+    "Nun-medial",
+    "Pe",
+    "Pe-final",
+    "Qof",
+    "Resh",
+    "Samekh",
+    "Shin",
+    "Taw",
+    "Tet",
+    "Tsadi-final",
+    "Tsadi-medial",
+    "Waw",
+    "Yod",
+    "Zayin",
+]
+
+
 class Classifier:
     def __init__(
         self,
@@ -132,7 +163,7 @@ class Classifier:
 
     def _revert_label(self, pred: np.ndarray) -> str:
         le = preprocessing.LabelEncoder()
-        le.fit(self.y_train)
+        le.fit(LABELS)
         return le.inverse_transform(pred)
 
     def preprocess_data(self):
