@@ -1,11 +1,12 @@
 import glob
-from typing import Union
+from typing import Optional, Union
 
 import click
 from tqdm.contrib.concurrent import process_map
 
 from src.segmentation.line import LineSegmenter
-from src.augmentation.augmentation import ImageAugmentation
+
+# from src.augmentation.augmentation import ImageAugmentation
 from src.utils.logger import logger
 from src.utils.zip import unzip_all
 from src.classification.classifier import Classifier
@@ -62,9 +63,9 @@ def augment(folder: str) -> None:
 
 @cli.command()
 @click.option("--folder", default=None)
-@click.option("--train", default=None)
+@click.option("--train/--no-train", default=False)
 @click.option("--predict", default=None)
-def classify(folder: str, train: bool = False, predict: str = None) -> None:
+def classify(folder: str, train: bool = False, predict: Optional[str] = None) -> None:
 
     if train:
         logger.info("Starting training")

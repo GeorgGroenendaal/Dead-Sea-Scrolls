@@ -1,4 +1,5 @@
 from random import seed
+from typing import Optional
 import tensorflow as tf
 from tensorflow.keras import models, layers
 
@@ -47,11 +48,11 @@ class Classifier:
     def __init__(
         self,
         predicit: bool = False,
-        predict_image: str = None,
+        predict_image: Optional[str] = None,
         train: bool = False,
     ) -> None:
 
-        self.data_path = "../../data/unpacked/characters"
+        self.data_path = "data/unpacked/characters"
 
         if train:
             self.x_train, self.x_test, self.y_train, self.y_test = self.load_data()
