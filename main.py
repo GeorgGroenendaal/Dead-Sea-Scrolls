@@ -44,8 +44,9 @@ def segment(save_intermediate: bool, file: Union[str, None]) -> None:
 
 @cli.command()
 @click.option("--folder", default=None)
+@click.option("--train", default=None)
+@click.option("--predict", default=None)
 def augment(folder: str) -> None:
-
     if not folder:
         folder = "data/unpacked/image-data"
 
@@ -61,19 +62,29 @@ def augment(folder: str) -> None:
 
 @cli.command()
 @click.option("--folder", default=None)
-def classify(folder: str) -> None:
-    if not folder:
+@click.option("--train", default=None)
+@click.option("--predict", default=None)
+def classify(folder: str, train: bool = False, predict: str = None) -> None:
 
+    if train:
+        logger.info("Starting training")
         folder = "data/unpacked/characters"
 
-    # check if data path exist stop if not
-    if not os.path.exists(folder):
-        logger.error("Data path does not exist, please run prepare command first")
-        return
+        # check if data path exist stop if not
+        if not os.path.exists(folder):
+            logger.error("Data path does not exist, please run prepare command first")
+            return
 
-    logger.info("Starting classification")
+        logger.info("Starting classification")
 
-    Classifier(folder)
+        Classifier(train=True)
+
+    if predict:
+        logger.info("Starting prediction {}".format(predict))
+        if not os.path.exists(predict):
+            logger.error("Image does not exist")
+            return
+        Classifier(predicit=True, predict_image=predict)
 
 
 if __name__ == "__main__":
