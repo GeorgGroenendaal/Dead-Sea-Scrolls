@@ -47,37 +47,34 @@ LABELS = [
 class Classifier:
     def __init__(
         self,
-        predicit: bool = False,
-        predict_image: Optional[str] = None,
-        train: bool = False,
+        predict_image_from_path: Optional[str] = None,
     ) -> None:
 
         self.data_path = "data/unpacked/characters"
 
-        if train:
-            self.x_train, self.x_test, self.y_train, self.y_test = self.load_data()
-            self.train_model()
-
-        if predicit:
+        if predict_image_from_path:
             self.get_model()
-            logger.info(f"Predicted label is {self.predict_from_path(predict_image)}")
+            logger.info(
+                f"Predicted label is {self.predict_from_path(predict_image_from_path)}"
+            )
 
-    def train_model(self):
+    def train_model(self) -> None:
+        self.x_train, self.x_test, self.y_train, self.y_test = self._load_data()
         self.create_model()
-        self.compile_model()
+        self._compile_model()
         self.fit_model()
-        self.save_model()
+        self._save_model()
 
     def get_model(self) -> None:
 
         try:
-            self.model = models.load_model("model.h5")
+            self.model = models._load_model("model.h5")
             logger.info("Model loaded")
         except:
             logger.info("model not found, creating new model")
             self.train_model()
 
-    def create_model(self):
+    def create_model(self) -> None:
         model = models.Sequential(
             [
                 layers.Conv2D(6, 5, activation="tanh", input_shape=(32, 32, 1)),
@@ -94,39 +91,45 @@ class Classifier:
         )
         self.model = model
 
-    def compile_model(self) -> None:
+    def _compile_model(self) -> None:
         self.model.compile(
             optimizer=keras.optimizers.Adam(),
             loss=keras.losses.SparseCategoricalCrossentropy(),
             metrics=[keras.metrics.SparseCategoricalAccuracy()],
         )
 
-    def _callbacks(self) -> None:
+    def _callbacks(self) -> list:
         callbacks = [
             keras.callbacks.EarlyStopping(
-                monitor="val_loss", patience=3, verbose=1, min_delta=1e-2
+                monitor="val_loss", patience=10, verbose=1, min_delta=1e-2
             )
         ]
-        self.callbacks = callbacks
+        return callbacks
 
     def fit_model(self) -> None:
         self.model.fit(
             x=self.x_train,
             y=self.y_train,
-            epochs=60,
-            batch_size=64,
+            epochs=100,
+            batch_size=25,
             validation_data=(self.x_test, self.y_test),
-            callbacks=self._callbacks(),
+            # callbacks=self._callbacks(),
             validation_split=0.2,
         )
 
-    def save_model(self) -> None:
+    def _save_model(self) -> None:
         self.model.save("model.h5")
 
     def load_model(self) -> None:
-        self.model = models.load_model("model.h5")
+        try:
+            self.model = models.load_model("model.h5")
+            logger.info("Model loaded")
+        except:
+            logger.info(
+                "model not found, creating/train a new model first with --train"
+            )
 
-    def load_data(self):
+    def _load_data(self) -> tuple:
 
         try:
             with open("data.pkl", "rb") as f:
@@ -152,20 +155,23 @@ class Classifier:
         img = img[np.newaxis, :, :]
         img = img.astype("float32") / 255
         pred = self.model.predict(img)
+        print(self._inverse_transform(pred))
         return pred
 
     def predict_from_path(self, path: str) -> str:
         img = cv2.imread(path, 0)
-        img = cv2.resize(img, (32, 32))
-        img = img[np.newaxis, :, :]
-        img = img.astype("float32") / 255
-        pred = self.model.predict(img)
-        return self._revert_label(pred)
+        return self.predict(img)
 
-    def _revert_label(self, pred: np.ndarray) -> str:
+    def _inverse_transform(self, pred: np.ndarray) -> str:
         le = preprocessing.LabelEncoder()
         le.fit(LABELS)
+        return le.inverse_transform(np.argmax(pred, axis=1))[0]
         return le.inverse_transform(pred)
+
+    def _encode_labels(self, labels: list) -> np.ndarray:
+        le = preprocessing.LabelEncoder()
+        le.fit(labels)
+        return le.transform(labels)
 
     def preprocess_data(self):
         characters = os.listdir(self.data_path)
@@ -187,14 +193,11 @@ class Classifier:
                     im_arr = np.concatenate((im_arr, temp_arr), axis=0)
                 lb_arr.append(character)
 
-        lb_arr = np.array(lb_arr)
-        le = preprocessing.LabelEncoder()
-        le.fit(lb_arr)
-        new_labels = le.transform(lb_arr)
+        lb_arr = self._encode_labels(lb_arr)
 
         # dump the data to pickle
         with open("data.pkl", "wb") as f:
             pickle.dump(im_arr, f)
-            pickle.dump(new_labels, f)
+            pickle.dump(lb_arr, f)
 
-        return im_arr, new_labels
+        return im_arr, lb_arr

@@ -43,22 +43,22 @@ def segment(save_intermediate: bool, file: Union[str, None]) -> None:
         process_map(line_segmenter.segment_lines, binary_files)
 
 
-@cli.command()
-@click.option("--folder", default=None)
-@click.option("--train", default=None)
-@click.option("--predict", default=None)
-def augment(folder: str) -> None:
-    if not folder:
-        folder = "data/unpacked/image-data"
+# @cli.command()
+# @click.option("--folder", default=None)
+# @click.option("--train", default=None)
+# @click.option("--predict", default=None)
+# def augment(folder: str) -> None:
+#     if not folder:
+#         folder = "data/unpacked/image-data"
 
-    # check if data path exist stop if not
-    if not os.path.exists(folder):
-        logger.error("Data path does not exist, please run prepare command first")
-        return
+#     # check if data path exist stop if not
+#     if not os.path.exists(folder):
+#         logger.error("Data path does not exist, please run prepare command first")
+#         return
 
-    logger.info("Starting image augmentation")
+#     logger.info("Starting image augmentation")
 
-    ImageAugmentation(folder)
+#     ImageAugmentation(folder)
 
 
 @cli.command()
@@ -67,6 +67,7 @@ def augment(folder: str) -> None:
 @click.option("--predict", default=None)
 def classify(folder: str, train: bool = False, predict: Optional[str] = None) -> None:
 
+    classifier = Classifier()
     if train:
         logger.info("Starting training")
         folder = "data/unpacked/characters"
@@ -78,14 +79,15 @@ def classify(folder: str, train: bool = False, predict: Optional[str] = None) ->
 
         logger.info("Starting classification")
 
-        Classifier(train=True)
+        classifier.train_model()
 
     if predict:
         logger.info("Starting prediction {}".format(predict))
         if not os.path.exists(predict):
             logger.error("Image does not exist")
             return
-        Classifier(predicit=True, predict_image=predict)
+        classifier.load_model()
+        classifier.predict_from_path(path=predict)
 
 
 if __name__ == "__main__":
