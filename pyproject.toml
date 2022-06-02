@@ -38,7 +38,11 @@ exclude="cache/"
 module = [
     "joblib",
     "scipy",
-    "tqdm.contrib.concurrent"
+    "tqdm.contrib.concurrent",
+    "cv2",
+    "skimage.*",
+    "imutils",
+    "matplotlib"
 ]
 ignore_missing_imports=true
 
