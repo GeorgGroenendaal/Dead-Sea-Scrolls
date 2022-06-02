@@ -7,8 +7,9 @@ from scipy import ndimage
 from skimage.feature import peak_local_max
 from skimage.segmentation import watershed
 
-from src.utils.images import get_name
+from src.utils.images import get_name, get_parent_name
 from src.utils.logger import logger
+from src.utils.paths import CHARACTER_SEGMENT_PATH, DEBUG_CHARACTER_SEGMENT_PATH
 
 
 class CharacterSegmenter:
@@ -18,70 +19,81 @@ class CharacterSegmenter:
 
     def segment_characters(self, image_path: str) -> None:
         name = get_name(image_path)
+        parent_name = get_parent_name(image_path)
         image = cv2.imread(image_path)
 
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        thresh = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[
-            1
-        ]
-
-        # compute the exact Euclidean distance from every binary
-        # pixel to the nearest zero pixel, then find peaks in this
-        # distance map
-        distance = ndimage.distance_transform_edt(thresh)
-
-        localMax = peak_local_max(
+        _, thresholded_image = cv2.threshold(
+            gray_image, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU
+        )
+        distance = ndimage.distance_transform_edt(thresholded_image)  # distance
+        local_max = peak_local_max(
             distance,
             indices=False,
-            min_distance=26,
-            labels=thresh,
+            min_distance=self.min_distance,
+            labels=thresholded_image,
         )
 
-        markers = ndimage.label(localMax, structure=np.ones((3, 3)))[0]
-        labels = watershed(-distance, markers, mask=thresh, watershed_line=False)
-        logger.info(
-            "[INFO] {} unique segments found".format(len(np.unique(labels)) - 1)
+        markers, _ = ndimage.label(local_max, structure=np.ones((3, 3)))
+        labels = watershed(
+            -distance, markers, mask=thresholded_image, watershed_line=False
         )
+        logger.info(f"[INFO] {len(np.unique(labels)) - 1} unique segments found")
 
         for i, label in enumerate(np.unique(labels)):
-            # if the label is zero, we are examining the 'background'
-            if label == 0:
+            if label == 0:  # first label is background
                 continue
 
             mask = np.zeros(gray_image.shape, dtype=np.uint8)
             mask[labels == label] = 255
+            contours = cv2.findContours(
+                mask.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
+            )
+            contours = imutils.grab_contours(contours)
+            max_countours = max(contours, key=cv2.contourArea)
+            ((circle_x, circle_y), radius) = cv2.minEnclosingCircle(max_countours)
+            circle_mask = np.zeros(gray_image.shape, dtype=np.uint8)
+            cv2.circle(
+                circle_mask, (int(circle_x), int(circle_y)), int(radius), 255, -1
+            )  # in place operation, add circle to mask
 
-            # detect contours in the mask and grab the largest one
-            cnts = cv2.findContours(mask.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-            cnts = imutils.grab_contours(cnts)
-            c = max(cnts, key=cv2.contourArea)
-            ((x, y), r) = cv2.minEnclosingCircle(c)
+            circle_x_min = max(round(circle_x - radius), 0)
+            circle_x_max = round(circle_x + radius)
+            circle_y_min = max(round(circle_y - radius), 0)
+            circle_y_max = round(circle_y + radius)
+            result = gray_image * circle_mask * 255
+            cropped_result = result[
+                circle_y_min:circle_y_max, circle_x_min:circle_x_max
+            ]
 
-            if self.debug:
-                cv2.circle(image, (int(x), int(y)), int(r), (0, 255, 0), 2)
+            out_path = pathlib.Path(
+                f"{CHARACTER_SEGMENT_PATH}/{parent_name}/{name}/character_{i}.png"
+            )
+            out_path.parents[0].mkdir(parents=True, exist_ok=True)
 
-            circle_mask = np.zeros(gray_image.shape, dtype="uint8")
-
-            # TODO: perform actual circle mask
-            x_min, x_max = int(x - r), int(x + r)
-            y_min, y_max = int(y - r), int(y + r)
-            cv2.circle(circle_mask, (int(x), int(y)), int(r), 255, -1)
-            masked = cv2.bitwise_and(gray_image, gray_image, mask=circle_mask)
-
-            result = masked[y_min:y_max, x_min:x_max]
+            if cropped_result.any():
+                cv2.imwrite(str(out_path), cropped_result)
+            else:
+                logger.warning(
+                    "Cropped result small, skipping, dimensions"
+                    f" x {circle_x} y {circle_y} r {circle_y}"
+                )
 
             if result.any() and self.debug:
-                path = f"data/out/segments/characters/{name}_character_{i}.png"
-                parsed_path = pathlib.Path(path)
-                parsed_path.parents[0].mkdir(parents=True, exist_ok=True)
-
-                cv2.imwrite(path, result)
+                cv2.circle(
+                    image, (int(circle_x), int(circle_y)), int(radius), (0, 255, 0), 2
+                )
                 cv2.putText(
                     image,
-                    "#{}".format(label),
-                    (int(x) - 10, int(y)),
+                    f"#{label}",
+                    (int(circle_x) - 10, int(circle_y)),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.6,
                     (0, 0, 255),
                     2,
                 )
+
+        if self.debug:
+            debug_path = pathlib.Path(f"{DEBUG_CHARACTER_SEGMENT_PATH}/{name}.png")
+            debug_path.parents[0].mkdir(parents=True, exist_ok=True)
+            cv2.imwrite(str(debug_path), image)

@@ -1,0 +1,10 @@
+_DATA = "data"
+_DEBUG = _DATA + "/debug"
+_SEGMENTS = _DATA + "/segments"
+_DEBUG_SEGMENTS = _DEBUG + "/segments"
+
+LINE_SEGMENT_PATH = _SEGMENTS + "/lines"
+CHARACTER_SEGMENT_PATH = _SEGMENTS + "/characters"
+
+DEBUG_LINE_SEGMENT_PATH = _DEBUG_SEGMENTS + "/lines"
+DEBUG_CHARACTER_SEGMENT_PATH = _DEBUG_SEGMENTS + "/characters"

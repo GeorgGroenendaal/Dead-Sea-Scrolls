@@ -8,6 +8,7 @@ from src.segmentation.line import LineSegmenter
 from src.segmentation.character import CharacterSegmenter
 from src.utils.logger import logger
 from src.utils.zip import unzip_all
+from src.utils.paths import LINE_SEGMENT_PATH
 
 
 @click.group()
@@ -50,8 +51,13 @@ def charactersegment(file: Union[str, None], debug: bool = False) -> None:
     if file:
         character_segmenter.segment_characters(file)
     else:
-        files = glob.glob("data/out/segments/lines/*/*.png")
-        process_map(character_segmenter.segment_characters, files)
+        files = glob.glob(f"{LINE_SEGMENT_PATH}/**/*.png")
+
+        if not files:
+            logger.warning("No images with segmented lines, did you run linesegment?")
+
+        for file in files:
+            character_segmenter.segment_characters(file)
 
 
 if __name__ == "__main__":

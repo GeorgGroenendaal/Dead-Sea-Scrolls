@@ -32,12 +32,23 @@
             ]
         },
         {
-            "name": "Python: Segment",
+            "name": "Python: Line Segment",
             "type": "python",
             "request": "launch",
             "program": "main.py",
             "args": [
-                "segment"
+                "linesegment"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Character Segment",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "args": [
+                "charactersegment"
             ],
             "console": "integratedTerminal",
             "justMyCode": true
