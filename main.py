@@ -1,14 +1,16 @@
+from email.policy import default
 import glob
 from typing import Union
 
 import click
 from tqdm.contrib.concurrent import process_map
 
-from src.segmentation.line import LineSegmenter
+from src.augmentation.augment import augment
 from src.segmentation.character import CharacterSegmenter
+from src.segmentation.line import LineSegmenter
 from src.utils.logger import logger
-from src.utils.zip import unzip_all
 from src.utils.paths import LINE_SEGMENT_PATH
+from src.utils.zip import unzip_all
 
 
 @click.group()
@@ -58,6 +60,12 @@ def charactersegment(file: Union[str, None], debug: bool = False) -> None:
 
         for file in files:
             character_segmenter.segment_characters(file)
+
+
+@cli.command(name="augment")
+@click.option("--resize_size", default=32)
+def run_augment(resize_size: int) -> None:
+    augment(resize_size)
 
 
 if __name__ == "__main__":
