@@ -1,11 +1,15 @@
+from email.policy import default
 import glob
 from typing import Union
 
 import click
 from tqdm.contrib.concurrent import process_map
 
+from src.augmentation.augment import augment
+from src.segmentation.character import CharacterSegmenter
 from src.segmentation.line import LineSegmenter
 from src.utils.logger import logger
+from src.utils.paths import LINE_SEGMENT_PATH
 from src.utils.zip import unzip_all
 
 
@@ -23,10 +27,10 @@ def prepare() -> None:
 
 
 @cli.command()
-@click.option("--save-intermediate/--no-save-intermediate", default=False)
+@click.option("--debug/--no-debug", default=False)
 @click.option("--file", default=None)
-def segment(save_intermediate: bool, file: Union[str, None]) -> None:
-    line_segmenter = LineSegmenter(save_intermediate=save_intermediate)
+def linesegment(debug: bool, file: Union[str, None]) -> None:
+    line_segmenter = LineSegmenter(debug=debug)
 
     if file:
         logger.info(f"Starting line segmentation on {file}")
@@ -37,6 +41,31 @@ def segment(save_intermediate: bool, file: Union[str, None]) -> None:
 
         # concurrent processing
         process_map(line_segmenter.segment_lines, binary_files)
+
+
+@cli.command()
+@click.option("--file", default=None)
+@click.option("--debug/--no-debug", default=False)
+def charactersegment(file: Union[str, None], debug: bool = False) -> None:
+    logger.info("Starting character segmentation")
+    character_segmenter = CharacterSegmenter(debug=debug)
+
+    if file:
+        character_segmenter.segment_characters(file)
+    else:
+        files = glob.glob(f"{LINE_SEGMENT_PATH}/**/*.png")
+
+        if not files:
+            logger.warning("No images with segmented lines, did you run linesegment?")
+
+        for file in files:
+            character_segmenter.segment_characters(file)
+
+
+@cli.command(name="augment")
+@click.option("--resize_size", default=32)
+def run_augment(resize_size: int) -> None:
+    augment(resize_size)
 
 
 if __name__ == "__main__":

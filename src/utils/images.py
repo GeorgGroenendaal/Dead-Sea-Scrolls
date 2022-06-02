@@ -15,3 +15,7 @@ def store_image(image: np.ndarray, path: str, cmap: Cmap) -> None:
 
 def get_name(path: str) -> str:
     return pathlib.Path(path).stem
+
+
+def get_parent_name(path: str) -> str:
+    return pathlib.Path(path).parent.stem
