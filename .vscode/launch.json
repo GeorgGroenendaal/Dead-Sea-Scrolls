@@ -54,6 +54,16 @@
             "justMyCode": true
         },
         {
+            "name": "Python: TRAIN cnn",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "args": [
+                "train"
+            ],
+            "console": "integratedTerminal",
+        },
+        {
             "name": "Python: Segment: Single file",
             "type": "python",
             "request": "launch",

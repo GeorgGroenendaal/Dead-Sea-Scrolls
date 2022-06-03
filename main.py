@@ -1,4 +1,3 @@
-from email.policy import default
 import glob
 from typing import Union
 
@@ -6,6 +5,7 @@ import click
 from tqdm.contrib.concurrent import process_map
 
 from src.augmentation.augment import augment
+from src.classification.classifier import Classifier
 from src.segmentation.character import CharacterSegmenter
 from src.segmentation.line import LineSegmenter
 from src.utils.logger import logger
@@ -66,6 +66,13 @@ def charactersegment(file: Union[str, None], debug: bool = False) -> None:
 @click.option("--resize_size", default=32)
 def run_augment(resize_size: int) -> None:
     augment(resize_size)
+
+
+@cli.command()
+@click.option("--train/--no-train", default=True)
+@click.argument("name")
+def train(train: bool, name: str) -> None:
+    Classifier(train=train, model_filename=name, debug=True)
 
 
 if __name__ == "__main__":
