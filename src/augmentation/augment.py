@@ -27,25 +27,35 @@ def _load_characters(path: str) -> List[Tuple[str, str, Mat]]:
     return result
 
 
+# return a random function that will perform the given operation on the image
+def _get_random_operation():
+    return np.random.choice(
+        [
+            _erosion,
+            _dilation,
+            _shear,
+        ]
+    )
+
+
 def augment(resize_size: int) -> None:
-    # perform augmentation with random variables
-    # store in new  folder
     characters = _load_characters(CHARACTER_TRAIN_PATH)
 
     for character_name, file_name, image in characters:
         image = 255 - image
         image = cv2.resize(image, (resize_size, resize_size))
+        for _ in range(4):
+            r_image = _get_random_operation()(
+                image, np.random.randint(1, 2), np.random.randint(1, 2)
+            )
+            out_path = pathlib.Path(
+                f"{CHARACTER_TRAIN_AUGMENTED_PATH}/{character_name}/{file_name}.png"
+            )
+            out_path.parents[0].mkdir(parents=True, exist_ok=True)
+            cv2.imwrite(str(out_path), r_image)
 
-        out_path = pathlib.Path(
-            f"{CHARACTER_TRAIN_AUGMENTED_PATH}/{character_name}/{file_name}.png"
-        )
-        out_path.parents[0].mkdir(parents=True, exist_ok=True)
-        cv2.imwrite(str(out_path), image)
 
-
-def _erosion(
-    image: np.ndarray, kernel_size: int, iterations: int, erosion_size: int
-) -> np.ndarray:
+def _erosion(image: np.ndarray, iterations: int, erosion_size: int) -> np.ndarray:
     elements = cv2.getStructuringElement(
         cv2.MORPH_RECT,
         (2 * erosion_size + 1, 2 * erosion_size + 1),
@@ -55,9 +65,7 @@ def _erosion(
     return cv2.erode(image, elements, iterations=iterations)
 
 
-def _dilation(
-    image: np.ndarray, kernel_size: int, iterations: int, dilation_size: int
-) -> np.ndarray:
+def _dilation(image: np.ndarray, iterations: int, dilation_size: int) -> np.ndarray:
     elements = cv2.getStructuringElement(
         cv2.MORPH_RECT,
         (2 * dilation_size + 1, 2 * dilation_size + 1),
@@ -65,6 +73,18 @@ def _dilation(
     )
 
     return cv2.dilate(image, elements, iterations=iterations)
+
+
+def _shear(image: np.ndarray, iterations: int, shear_size: int) -> np.ndarray:
+    return cv2.warpPerspective(
+        image,
+        _get_shear_matrix(shear_size),
+        (image.shape[1], image.shape[0]),
+    )
+
+
+def _get_shear_matrix(shear_size: int) -> np.ndarray:
+    return np.float32([[1, 0.5, 0], [0, 1, 0], [0, 0, 1]])
 
 
 def _deduplicate_paths(paths: List[str]) -> List[str]:
