@@ -1,16 +1,19 @@
+from email.policy import default
 import glob
 from typing import Optional, Union
 
 import click
 from tqdm.contrib.concurrent import process_map
 
+from src.augmentation.augment import augment
+from src.segmentation.character import CharacterSegmenter
 from src.segmentation.line import LineSegmenter
 
 # from src.augmentation.augmentation import ImageAugmentation
 from src.utils.logger import logger
+from src.utils.paths import LINE_SEGMENT_PATH
 from src.utils.zip import unzip_all
 from src.classification.classifier import Classifier
-import os
 
 
 @click.group()
@@ -27,10 +30,10 @@ def prepare() -> None:
 
 
 @cli.command()
-@click.option("--save-intermediate/--no-save-intermediate", default=False)
+@click.option("--debug/--no-debug", default=False)
 @click.option("--file", default=None)
-def segment(save_intermediate: bool, file: Union[str, None]) -> None:
-    line_segmenter = LineSegmenter(save_intermediate=save_intermediate)
+def linesegment(debug: bool, file: Union[str, None]) -> None:
+    line_segmenter = LineSegmenter(debug=debug)
 
     if file:
         logger.info(f"Starting line segmentation on {file}")
@@ -43,51 +46,29 @@ def segment(save_intermediate: bool, file: Union[str, None]) -> None:
         process_map(line_segmenter.segment_lines, binary_files)
 
 
-# @cli.command()
-# @click.option("--folder", default=None)
-# @click.option("--train", default=None)
-# @click.option("--predict", default=None)
-# def augment(folder: str) -> None:
-#     if not folder:
-#         folder = "data/unpacked/image-data"
-
-#     # check if data path exist stop if not
-#     if not os.path.exists(folder):
-#         logger.error("Data path does not exist, please run prepare command first")
-#         return
-
-#     logger.info("Starting image augmentation")
-
-#     ImageAugmentation(folder)
-
-
 @cli.command()
-@click.option("--folder", default=None)
-@click.option("--train/--no-train", default=False)
-@click.option("--predict", default=None)
-def classify(folder: str, train: bool = False, predict: Optional[str] = None) -> None:
+@click.option("--file", default=None)
+@click.option("--debug/--no-debug", default=False)
+def charactersegment(file: Union[str, None], debug: bool = False) -> None:
+    logger.info("Starting character segmentation")
+    character_segmenter = CharacterSegmenter(debug=debug)
 
-    classifier = Classifier()
-    if train:
-        logger.info("Starting training")
-        folder = "data/unpacked/characters"
+    if file:
+        character_segmenter.segment_characters(file)
+    else:
+        files = glob.glob(f"{LINE_SEGMENT_PATH}/**/*.png")
 
-        # check if data path exist stop if not
-        if not os.path.exists(folder):
-            logger.error("Data path does not exist, please run prepare command first")
-            return
+        if not files:
+            logger.warning("No images with segmented lines, did you run linesegment?")
 
-        logger.info("Starting classification")
+        for file in files:
+            character_segmenter.segment_characters(file)
 
-        classifier.train_model()
 
-    if predict:
-        logger.info("Starting prediction {}".format(predict))
-        if not os.path.exists(predict):
-            logger.error("Image does not exist")
-            return
-        classifier.load_model()
-        classifier.predict_from_path(path=predict)
+@cli.command(name="augment")
+@click.option("--resize_size", default=32)
+def run_augment(resize_size: int) -> None:
+    augment(resize_size)
 
 
 if __name__ == "__main__":

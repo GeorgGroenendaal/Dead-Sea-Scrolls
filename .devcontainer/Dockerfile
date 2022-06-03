@@ -11,6 +11,9 @@ RUN if [ "${NODE_VERSION}" != "anone" ]; then su vscode -c "umask 0002 && . /usr
 RUN apt-get update
 RUN apt-get install ffmpeg libsm6 libxext6  -y
 
+RUN apt-get update
+RUN apt-get install ffmpeg libsm6 libxext6  -y
+
 RUN pip3 install poetry
 RUN poetry config virtualenvs.in-project true
 

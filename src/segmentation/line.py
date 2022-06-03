@@ -8,12 +8,13 @@ from scipy import ndimage
 from src.utils.cache import memory
 from src.utils.images import get_name, store_image
 from src.utils.logger import logger
+from src.utils.paths import DEBUG_LINE_SEGMENT_PATH, LINE_SEGMENT_PATH
 
 GrayScaleImage = npt.NDArray[np.uint8]
 Tracers = npt.NDArray[np.int32]
 
 
-# This function is outside of class for better caching: 
+# This function is outside of class for better caching:
 # https://joblib.readthedocs.io/en/latest/memory.html
 @memory.cache
 def _blur(
@@ -28,9 +29,9 @@ class LineSegmenter:
     (A. Nicolaou and B. Gatos) 2009
     """
 
-    def __init__(self, binary_cutoff: int = 127, save_intermediate: bool = False):
+    def __init__(self, binary_cutoff: int = 127, debug: bool = False):
         self.binary_cutoff = binary_cutoff
-        self.save_intermediate = save_intermediate
+        self.debug = debug
 
     def segment_lines(self, image_path: str) -> None:
         name = get_name(image_path)
@@ -54,9 +55,11 @@ class LineSegmenter:
         # performing blur, reusing cache if possible
         blurred_image: GrayScaleImage = _blur(image, blurred_width, blurred_height)
 
-        if self.save_intermediate:
+        if self.debug:
             logger.debug(f"Storing intermediate blurred image {name}")
-            store_image(blurred_image, f"data/intermediate/blurred/{name}.jpg", "gray")
+            store_image(
+                blurred_image, f"{DEBUG_LINE_SEGMENT_PATH}/{name}_blurred.png", "gray"
+            )
 
         tracers = self._trace(blurred_image, blurred_height)
         trace_mask_rl = self._trace_to_mask(tracers)
@@ -75,13 +78,14 @@ class LineSegmenter:
 
         final = filtered_components * binarized_image
 
-        if self.save_intermediate:
+        if self.debug:
             store_image(
                 filtered_components - final,
-                f"data/intermediate/final/{name}.png",
+                f"{DEBUG_LINE_SEGMENT_PATH}/{name}_lines.png",
                 "gist_rainbow",
             )
 
+        count = 0  # not using enumerate as filname since many crops are empty
         for i, loc in enumerate(ndimage.find_objects(final)):
             if loc:
                 # the bounding box may include other segments, == i+1 isolates the one segment
@@ -89,9 +93,10 @@ class LineSegmenter:
 
                 store_image(
                     segment,
-                    f"data/out/segments/{name}/segment_{i}.png",
+                    f"{LINE_SEGMENT_PATH}/{name}/line_{count}.png",
                     "gray",
                 )
+                count += 1
 
     def _invert_grayschale_image(self, image: GrayScaleImage) -> GrayScaleImage:
         return np.uint8(255) - image
