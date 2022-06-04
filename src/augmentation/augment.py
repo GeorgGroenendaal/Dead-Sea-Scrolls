@@ -1,6 +1,6 @@
 import hashlib
 from glob import glob
-from typing import List, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 import cv2
 from cv2 import Mat
@@ -40,16 +40,27 @@ def _get_random_operation():
 
 def augment(resize_size: int) -> None:
     characters = _load_characters(CHARACTER_TRAIN_PATH)
+    # class_weights = _gen_class_weights(characters)
+    # print(f"class is {class_weights} en len is {len(class_weights)}")
+    # return
+
+    n_classes: Dict[str, int] = {}
+    augment_size = 300
+    for character_name, _, _ in characters:
+        value = n_classes.get(character_name, 0)
+        n_classes[character_name] = value + 1
 
     for character_name, file_name, image in characters:
         image = 255 - image
         image = cv2.resize(image, (resize_size, resize_size))
-        for _ in range(4):
+
+        num_of_augments = augment_size // n_classes[character_name]
+        for i in range(num_of_augments):
             r_image = _get_random_operation()(
                 image, np.random.randint(1, 2), np.random.randint(1, 2)
             )
             out_path = pathlib.Path(
-                f"{CHARACTER_TRAIN_AUGMENTED_PATH}/{character_name}/{file_name}.png"
+                f"{CHARACTER_TRAIN_AUGMENTED_PATH}/{character_name}/{file_name}_{i}.png"
             )
             out_path.parents[0].mkdir(parents=True, exist_ok=True)
             cv2.imwrite(str(out_path), r_image)
@@ -107,6 +118,9 @@ def _deduplicate_paths(paths: List[str]) -> List[str]:
     logger.info(f"Removed {len(paths) - len(final_paths)} duplicates")
 
     return final_paths
+
+
+# def _gen_class_weights(characters: List[Tuple[str, str, Mat]]) -> np.ndarray:
 
 
 if __name__ == "__main__":
