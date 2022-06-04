@@ -115,6 +115,7 @@ def run(directory: str, out_dir: str, suffix: str) -> None:
         with open(pathlib.Path(out_path, out_name + ".txt"), "w") as out:
             mapped_output = text_to_font(output)
             out.write(mapped_output)
+            output = ""
 
 
 if __name__ == "__main__":
