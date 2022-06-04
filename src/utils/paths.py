@@ -11,3 +11,5 @@ DEBUG_CHARACTER_SEGMENT_PATH = _DEBUG_SEGMENTS + "/characters"
 
 CHARACTER_TRAIN_PATH = _DATA + "/unpacked/characters"
 CHARACTER_TRAIN_AUGMENTED_PATH = _DATA + "/unpacked/augmented_characters"
+
+MODEL_PATH = _DATA + "/model"

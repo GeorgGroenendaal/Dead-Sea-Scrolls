@@ -12,8 +12,8 @@ from src.utils.paths import CHARACTER_TRAIN_AUGMENTED_PATH, CHARACTER_TRAIN_PATH
 import pathlib
 
 
-def _load_characters(path: str) -> List[Tuple[str, str, Mat]]:
-    paths = _deduplicate_paths(glob(path + "/**/*.pgm"))
+def _load_characters(path: str, extension: str = "pgm") -> List[Tuple[str, str, Mat]]:
+    paths = _deduplicate_paths(glob(path + f"/**/*.{extension}"))
     logger.info(f"Got {len(paths)} files to load")
 
     result: List[Tuple[str, str, str]] = []
@@ -21,7 +21,7 @@ def _load_characters(path: str) -> List[Tuple[str, str, Mat]]:
     for character_path in paths:
         character_name = get_parent_name(character_path)
         file_name = get_name(character_path)
-        image = cv2.imread(character_path)
+        image = cv2.imread(character_path, cv2.IMREAD_GRAYSCALE)
         result.append((character_name, file_name, image))
 
     return result
