@@ -1,5 +1,7 @@
 import pickle
+from typing import List, Tuple
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
@@ -52,8 +54,34 @@ class Classifier:
 
             self._train()
 
-    def predict(self) -> None:
-        raise NotImplementedError()
+    def predict_batch(self, inp: npt.NDArray[np.int64]) -> npt.NDArray[np.float32]:
+        prediction = self.model.predict(
+            inp,
+            batch_size=None,
+            verbose="auto",
+            steps=None,
+            callbacks=None,
+            max_queue_size=10,
+            workers=1,
+            use_multiprocessing=False,
+        )
+
+        return prediction
+
+    def decode_proba_batch(
+        self, proba: npt.NDArray[np.float32]
+    ) -> List[Tuple[str, float]]:
+
+        if len(shape := proba.shape) < 2 or shape[1] != (
+            num_classes := len(self.label_encoder.classes_)
+        ):
+            raise ValueError(f"Expect probabilities of shape (N, {num_classes}")
+
+        max_label_encoded = np.argmax(proba, axis=1)
+        max_proba = np.max(proba, axis=1).tolist()
+        label = self.label_encoder.inverse_transform(max_label_encoded).tolist()
+
+        return list(zip(label, max_proba))
 
     def _train(self) -> None:
         logger.info(

@@ -54,12 +54,24 @@
             "justMyCode": true
         },
         {
+            "name": "Python: full run",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "args": [
+                "run"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "name": "Python: TRAIN cnn",
             "type": "python",
             "request": "launch",
             "program": "main.py",
             "args": [
-                "train"
+                "train",
+                "test"
             ],
             "console": "integratedTerminal",
         },
