@@ -1,5 +1,5 @@
 import pathlib
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import cv2
 import imutils
@@ -47,7 +47,7 @@ class CharacterSegmenter:
         )
         logger.info(f"[INFO] {len(np.unique(labels)) - 1} unique segments found")
 
-        characters: List[npt.NDArray[np.uint8]] = []
+        characters: List[Tuple[int, npt.NDArray[np.uint8]]] = []
 
         for i, label in enumerate(np.unique(labels)):
             if label == 0:  # first label is background
@@ -85,7 +85,7 @@ class CharacterSegmenter:
                 resized_result = cv2.resize(
                     cropped_result, (self.out_size, self.out_size)
                 )
-                characters.append(resized_result)
+                characters.append((circle_x, resized_result))
 
                 if self.debug:
                     cv2.imwrite(str(out_path), cropped_result)
@@ -114,4 +114,5 @@ class CharacterSegmenter:
             debug_path.parents[0].mkdir(parents=True, exist_ok=True)
             cv2.imwrite(str(debug_path), image)
 
-        return characters
+        characters.sort(key=lambda x: x[0])
+        return list(map(lambda x: x[1], characters))

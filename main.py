@@ -1,11 +1,8 @@
 import glob
-import os
 import pathlib
-from re import A
 from typing import Union
 
 import click
-import cv2
 import numpy as np
 from tqdm.contrib.concurrent import process_map
 
@@ -52,7 +49,7 @@ def linesegment(debug: bool, file: Union[str, None]) -> None:
 
 @cli.command()
 @click.option("--file", default=None)
-@click.option("--debug/--no-debug", default=False)
+@click.option("--debug/--no-debug", default=True)
 def charactersegment(file: Union[str, None], debug: bool = False) -> None:
     logger.info("Starting character segmentation")
     character_segmenter = CharacterSegmenter(debug=debug)
