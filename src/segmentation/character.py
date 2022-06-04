@@ -70,25 +70,16 @@ class CharacterSegmenter:
             circle_x_max = round(circle_x + radius)
             circle_y_min = max(round(circle_y - radius), 0)
             circle_y_max = round(circle_y + radius)
-            result = (image * circle_mask * 255).astype(np.uint8)
+            result = (thresholded_image * circle_mask * 255).astype(np.uint8)
             cropped_result = result[
                 circle_y_min:circle_y_max, circle_x_min:circle_x_max
             ]
-
-            if self.debug and self.name and self.parent_name:
-                out_path = pathlib.Path(
-                    f"{CHARACTER_SEGMENT_PATH}/{self.parent_name}/{self.name}/character_{i}.png"
-                )
-                out_path.parents[0].mkdir(parents=True, exist_ok=True)
 
             if cropped_result.any():
                 resized_result = cv2.resize(
                     cropped_result, (self.out_size, self.out_size)
                 )
                 characters.append((circle_x, resized_result))
-
-                if self.debug:
-                    cv2.imwrite(str(out_path), cropped_result)
             else:
                 logger.warning(
                     "Cropped result small, skipping, dimensions"
@@ -109,10 +100,19 @@ class CharacterSegmenter:
                     2,
                 )
 
-        if self.debug and self.name:
+        characters.sort(key=lambda x: x[0])
+        sorted_characters = list(map(lambda x: x[1], characters))
+
+        if self.debug and self.name and self.parent_name:
             debug_path = pathlib.Path(f"{DEBUG_CHARACTER_SEGMENT_PATH}/{self.name}.png")
             debug_path.parents[0].mkdir(parents=True, exist_ok=True)
             cv2.imwrite(str(debug_path), image)
 
-        characters.sort(key=lambda x: x[0])
-        return list(map(lambda x: x[1], characters))
+            for i, character in enumerate(sorted_characters):
+                out_path = pathlib.Path(
+                    f"{CHARACTER_SEGMENT_PATH}/{self.parent_name}/{self.name}/character_{i}.png"
+                )
+                out_path.parents[0].mkdir(parents=True, exist_ok=True)
+                cv2.imwrite(str(out_path), character)
+
+        return sorted_characters
