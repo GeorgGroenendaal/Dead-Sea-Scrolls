@@ -4,6 +4,7 @@
 
 - Python ^3.8 and < 3.11
 - (Optional) [Poetry](https://python-poetry.org/) for dependencies
+- use `git fls pull` to download the dataset
 
 For development
 - (Optionally) Docker 
