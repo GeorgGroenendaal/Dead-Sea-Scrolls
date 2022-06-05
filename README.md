@@ -21,6 +21,8 @@ For development
 
 *NOTE*: Print help using `python main.py --help`
 
+**IMPORTANT**. This program only works well on binarized images.
+
 The main command will read all `.jpg` images from `INPUT-DIRCTORY` and output the .txt files in the `results` folder. To do this, execute the following command from the root of the project.
 
     python main.py run [INPUT-DIRECTORY]
@@ -31,7 +33,7 @@ For example:
 
 The output directory can be changed using the `--o` flag. Defaults to `results`.
 
-    python main.py run test-images --out out/folder
+    python main.py run test-images --o out/folder
     
 To only select specific images it is possible to use the `--suffix` flag. This will only select `.jpg` files that end with a specific string. Usefull for selecting only binarized images.
 
