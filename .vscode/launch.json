@@ -54,6 +54,28 @@
             "justMyCode": true
         },
         {
+            "name": "Python: full run",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "args": [
+                "run"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: TRAIN cnn",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "args": [
+                "train",
+                "test"
+            ],
+            "console": "integratedTerminal",
+        },
+        {
             "name": "Python: Segment: Single file",
             "type": "python",
             "request": "launch",

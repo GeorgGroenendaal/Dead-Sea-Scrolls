@@ -33,7 +33,7 @@ class LineSegmenter:
         self.binary_cutoff = binary_cutoff
         self.debug = debug
 
-    def segment_lines(self, image_path: str) -> None:
+    def segment_from_path(self, image_path: str) -> List[npt.NDArray[np.uint8]]:
         name = get_name(image_path)
 
         image: GrayScaleImage = np.pad(
@@ -85,18 +85,24 @@ class LineSegmenter:
                 "gist_rainbow",
             )
 
+        line_segments: List[npt.NDArray[np.uint8]] = []
+
         count = 0  # not using enumerate as filname since many crops are empty
         for i, loc in enumerate(ndimage.find_objects(final)):
             if loc:
                 # the bounding box may include other segments, == i+1 isolates the one segment
                 segment = final[loc] == i + 1
 
-                store_image(
-                    segment,
-                    f"{LINE_SEGMENT_PATH}/{name}/line_{count}.png",
-                    "gray",
-                )
+                if self.debug:
+                    store_image(
+                        segment,
+                        f"{LINE_SEGMENT_PATH}/{name}/line_{count}.png",
+                        "gray",
+                    )
                 count += 1
+                line_segments.append(segment.astype(np.uint8) * 255)
+
+        return line_segments
 
     def _invert_grayschale_image(self, image: GrayScaleImage) -> GrayScaleImage:
         return np.uint8(255) - image
