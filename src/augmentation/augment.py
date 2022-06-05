@@ -120,8 +120,5 @@ def _deduplicate_paths(paths: List[str]) -> List[str]:
     return final_paths
 
 
-# def _gen_class_weights(characters: List[Tuple[str, str, Mat]]) -> np.ndarray:
-
-
 if __name__ == "__main__":
     _load_characters(CHARACTER_TRAIN_PATH)
