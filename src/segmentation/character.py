@@ -1,8 +1,10 @@
 import pathlib
+from typing import List, Optional, Tuple
 
 import cv2
 import imutils
 import numpy as np
+import numpy.typing as npt
 from scipy import ndimage
 from skimage.feature import peak_local_max
 from skimage.segmentation import watershed
@@ -13,18 +15,23 @@ from src.utils.paths import CHARACTER_SEGMENT_PATH, DEBUG_CHARACTER_SEGMENT_PATH
 
 
 class CharacterSegmenter:
-    def __init__(self, min_distance: int = 40, debug: bool = False):
+    def __init__(self, min_distance: int = 40, out_size: int = 32, debug: bool = False):
         self.debug = debug
+        self.out_size = out_size
         self.min_distance = min_distance
+        self.parent_name: Optional[str] = None
+        self.name: Optional[str] = None
 
-    def segment_characters(self, image_path: str) -> None:
-        name = get_name(image_path)
-        parent_name = get_parent_name(image_path)
-        image = cv2.imread(image_path)
+    def segment_from_path(self, path: str) -> List[npt.NDArray[np.uint8]]:
+        self.name = get_name(path)
+        self.parent_name = get_parent_name(path)
+        image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
 
-        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        return self.segment(image)
+
+    def segment(self, image: npt.NDArray[np.uint8]) -> List[npt.NDArray[np.uint8]]:
         _, thresholded_image = cv2.threshold(
-            gray_image, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU
+            image, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU
         )
         distance = ndimage.distance_transform_edt(thresholded_image)  # distance
         local_max = peak_local_max(
@@ -40,11 +47,13 @@ class CharacterSegmenter:
         )
         logger.info(f"[INFO] {len(np.unique(labels)) - 1} unique segments found")
 
+        characters: List[Tuple[int, npt.NDArray[np.uint8]]] = []
+
         for i, label in enumerate(np.unique(labels)):
             if label == 0:  # first label is background
                 continue
 
-            mask = np.zeros(gray_image.shape, dtype=np.uint8)
+            mask = np.zeros(image.shape, dtype=np.uint8)
             mask[labels == label] = 255
             contours = cv2.findContours(
                 mask.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE
@@ -52,7 +61,7 @@ class CharacterSegmenter:
             contours = imutils.grab_contours(contours)
             max_countours = max(contours, key=cv2.contourArea)
             ((circle_x, circle_y), radius) = cv2.minEnclosingCircle(max_countours)
-            circle_mask = np.zeros(gray_image.shape, dtype=np.uint8)
+            circle_mask = np.zeros(image.shape, dtype=np.uint8)
             cv2.circle(
                 circle_mask, (int(circle_x), int(circle_y)), int(radius), 255, -1
             )  # in place operation, add circle to mask
@@ -61,18 +70,16 @@ class CharacterSegmenter:
             circle_x_max = round(circle_x + radius)
             circle_y_min = max(round(circle_y - radius), 0)
             circle_y_max = round(circle_y + radius)
-            result = gray_image * circle_mask * 255
+            result = (thresholded_image * circle_mask * 255).astype(np.uint8)
             cropped_result = result[
                 circle_y_min:circle_y_max, circle_x_min:circle_x_max
             ]
 
-            out_path = pathlib.Path(
-                f"{CHARACTER_SEGMENT_PATH}/{parent_name}/{name}/character_{i}.png"
-            )
-            out_path.parents[0].mkdir(parents=True, exist_ok=True)
-
             if cropped_result.any():
-                cv2.imwrite(str(out_path), cropped_result)
+                resized_result = cv2.resize(
+                    cropped_result, (self.out_size, self.out_size)
+                )
+                characters.append((circle_x, resized_result))
             else:
                 logger.warning(
                     "Cropped result small, skipping, dimensions"
@@ -93,7 +100,19 @@ class CharacterSegmenter:
                     2,
                 )
 
-        if self.debug:
-            debug_path = pathlib.Path(f"{DEBUG_CHARACTER_SEGMENT_PATH}/{name}.png")
+        characters.sort(key=lambda x: x[0])
+        sorted_characters = list(map(lambda x: x[1], characters))
+
+        if self.debug and self.name and self.parent_name:
+            debug_path = pathlib.Path(f"{DEBUG_CHARACTER_SEGMENT_PATH}/{self.name}.png")
             debug_path.parents[0].mkdir(parents=True, exist_ok=True)
             cv2.imwrite(str(debug_path), image)
+
+            for i, character in enumerate(sorted_characters):
+                out_path = pathlib.Path(
+                    f"{CHARACTER_SEGMENT_PATH}/{self.parent_name}/{self.name}/character_{i}.png"
+                )
+                out_path.parents[0].mkdir(parents=True, exist_ok=True)
+                cv2.imwrite(str(out_path), character)
+
+        return sorted_characters
