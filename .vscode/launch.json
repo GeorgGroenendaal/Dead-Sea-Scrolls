@@ -102,6 +102,17 @@
             ],
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Python: Augment",
+            "type": "python",
+            "request": "launch",
+            "program": "main.py",
+            "args": [
+                "augment",
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }
