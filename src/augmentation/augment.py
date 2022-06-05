@@ -2,10 +2,11 @@ import hashlib
 import pathlib
 from glob import glob
 from typing import Callable, Dict, List, Set, Tuple
+import numpy.typing as npt
+import random
 
 import cv2
 import numpy as np
-import random
 from cv2 import Mat
 
 from src.utils.images import get_name, get_parent_name
@@ -28,71 +29,73 @@ def _load_characters(path: str, extension: str = "pgm") -> List[Tuple[str, str, 
     return result
 
 
-def _get_random_operation() -> Callable[[np.ndarray, int, int], np.ndarray]:
-    return random.choice(
-        [
-            _erosion,
-            _dilation,
-            _shear,
-        ]
-    )
+def _invert_and_resize(
+    image: npt.NDArray[np.uint8], resize_size: int = 32
+) -> npt.NDArray[np.uint8]:
+    inverted_image = (255 - image).astype(np.uint8)
+    return cv2.resize(inverted_image, (resize_size, resize_size))
 
 
-def augment(resize_size: int) -> None:
+def augment(augment_size: int = 500) -> None:
     characters = _load_characters(CHARACTER_TRAIN_PATH)
     n_classes: Dict[str, int] = {}
-    augment_size = 300
 
     for character_name, _, _ in characters:
         value = n_classes.get(character_name, 0)
         n_classes[character_name] = value + 1
 
-    for character_name, file_name, image in characters:
-        image = 255 - image
-        image = cv2.resize(image, (resize_size, resize_size))
+    for character_name, character_fn, character_img in characters:
+        existing_out_path = pathlib.Path(
+            f"{CHARACTER_TRAIN_AUGMENTED_PATH}/{character_name}/{character_fn}.png"
+        )
 
-        num_of_augments = augment_size // n_classes[character_name]
-        for i in range(num_of_augments):
-            r_image = _get_random_operation()(
-                image, np.random.randint(1, 2), np.random.randint(1, 2)
-            )
+        existing_out_path.parents[0].mkdir(parents=True, exist_ok=True)
+        cv2.imwrite(str(existing_out_path), _invert_and_resize(character_img))
+
+    for character_name, file_name, image in characters:
+        image = _invert_and_resize(image)
+        augments_left = augment_size - n_classes[character_name]
+        augments_per_source_image = round(augments_left / n_classes[character_name])
+
+        for i in range(augments_per_source_image):
+            image_copy = image.copy()
+            transformations: List[Callable[[np.ndarray], np.ndarray]] = [
+                _erosion,
+                _dilation,
+            ]
+            amount_of_tranformations = random.randint(1, len(transformations))
+            chosen_operations = random.sample(transformations, amount_of_tranformations)
+
+            for op in chosen_operations:
+                image_copy = op(image_copy)
+
+            image_copy = _shear(image_copy)  # we always shear for dupes
+
             out_path = pathlib.Path(
                 f"{CHARACTER_TRAIN_AUGMENTED_PATH}/{character_name}/{file_name}_{i}.png"
             )
             out_path.parents[0].mkdir(parents=True, exist_ok=True)
-            cv2.imwrite(str(out_path), r_image)
+            cv2.imwrite(str(out_path), image_copy)
 
 
-def _erosion(image: np.ndarray, iterations: int, erosion_size: int) -> np.ndarray:
-    elements = cv2.getStructuringElement(
-        cv2.MORPH_RECT,
-        (2 * erosion_size + 1, 2 * erosion_size + 1),
-        (erosion_size, erosion_size),
-    )
-
-    return cv2.erode(image, elements, iterations=iterations)
+def _erosion(image: np.ndarray) -> np.ndarray:
+    kernel = np.ones((3, 3))
+    return cv2.erode(image, kernel, iterations=random.randint(1, 2))
 
 
-def _dilation(image: np.ndarray, iterations: int, dilation_size: int) -> np.ndarray:
-    elements = cv2.getStructuringElement(
-        cv2.MORPH_RECT,
-        (2 * dilation_size + 1, 2 * dilation_size + 1),
-        (dilation_size, dilation_size),
-    )
-
-    return cv2.dilate(image, elements, iterations=iterations)
+def _dilation(image: np.ndarray) -> np.ndarray:
+    kernel = np.ones((3, 3))
+    return cv2.dilate(image, kernel, iterations=random.randint(1, 2))
 
 
-def _shear(image: np.ndarray, _: int, shear_size: int) -> np.ndarray:
+def _shear(image: np.ndarray) -> np.ndarray:
+    num = random.random() * 0.8 - 0.4
+
     return cv2.warpPerspective(
         image,
-        _get_shear_matrix(shear_size),
+        np.array([[1, num, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32),
         (image.shape[1], image.shape[0]),
     )
-
-
-def _get_shear_matrix(shear_size: int) -> np.ndarray:
-    return np.array([[1, 0.5, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32)
 
 
 def _deduplicate_paths(paths: List[str]) -> List[str]:

@@ -67,9 +67,8 @@ def charactersegment(file: Union[str, None], debug: bool = False) -> None:
 
 
 @cli.command(name="augment")
-@click.option("--resize_size", default=32)
-def run_augment(resize_size: int) -> None:
-    augment(resize_size)
+def run_augment() -> None:
+    augment()
 
 
 @cli.command()
@@ -84,7 +83,7 @@ def train(train: bool, name: str) -> None:
 @click.option("--o", "out_dir", default="results/")
 @click.option("--suffix", default="")
 def run(directory: str, out_dir: str, suffix: str) -> None:
-    classifier = Classifier(train=False, model_filename="test", debug=True)
+    classifier = Classifier(train=False, model_filename="augmented_cnn", debug=True)
     line_segmenter = LineSegmenter()
     character_segmenter = CharacterSegmenter(min_distance=40)
 

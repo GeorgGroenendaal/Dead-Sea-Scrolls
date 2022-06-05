@@ -3,6 +3,7 @@ from typing import List, Tuple
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
 from tensorflow import keras
@@ -105,17 +106,25 @@ class Classifier:
             x=x_train,
             y=y_train,
             epochs=100,
-            batch_size=25,
+            batch_size=64,
             validation_data=(x_test, y_test),
             callbacks=[
                 keras.callbacks.EarlyStopping(
-                    monitor="val_loss", patience=10, verbose=1, min_delta=1e-2
+                    monitor="val_loss", patience=6, verbose=1, min_delta=1e-2
                 )
             ],
             validation_split=0.2,
         )
 
-        with open(self.label_encoder_path, "wb") as out:
-            pickle.dump(self.label_encoder, out)
+        proba = self.predict_batch(x_test)
+        pred_labels = list(map(lambda x: x[0], self.decode_proba_batch(proba)))
+        true_labels: List[str] = self.label_encoder.inverse_transform(y_test).tolist()
+        report = classification_report(true_labels, pred_labels)
 
         self.model.save(self.model_path)
+
+        with open(f"{self.model_path}/classification_report.txt", "w") as out:
+            out.write(report)
+
+        with open(self.label_encoder_path, "wb") as out:
+            pickle.dump(self.label_encoder, out)
