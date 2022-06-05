@@ -85,7 +85,7 @@ def train(train: bool, name: str) -> None:
 def run(directory: str, out_dir: str, suffix: str) -> None:
     classifier = Classifier(train=False, model_filename="augmented_cnn", debug=True)
     line_segmenter = LineSegmenter()
-    character_segmenter = CharacterSegmenter(min_distance=40)
+    character_segmenter = CharacterSegmenter(min_distance=35)
 
     binary_files = glob.glob(f"{directory}/*{suffix}.jpg")
     output = ""

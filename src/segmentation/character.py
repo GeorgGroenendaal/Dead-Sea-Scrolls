@@ -15,12 +15,19 @@ from src.utils.paths import CHARACTER_SEGMENT_PATH, DEBUG_CHARACTER_SEGMENT_PATH
 
 
 class CharacterSegmenter:
-    def __init__(self, min_distance: int = 40, out_size: int = 32, debug: bool = False):
+    def __init__(
+        self,
+        min_distance: int = 40,
+        out_size: int = 32,
+        debug: bool = False,
+        parent_name: Optional[str] = None,
+        name: Optional[str] = None,
+    ):
         self.debug = debug
         self.out_size = out_size
         self.min_distance = min_distance
-        self.parent_name: Optional[str] = None
-        self.name: Optional[str] = None
+        self.parent_name: Optional[str] = parent_name
+        self.name: Optional[str] = name
 
     def segment_from_path(self, path: str) -> List[npt.NDArray[np.uint8]]:
         self.name = get_name(path)
@@ -75,7 +82,7 @@ class CharacterSegmenter:
                 circle_y_min:circle_y_max, circle_x_min:circle_x_max
             ]
 
-            if cropped_result.any():
+            if cropped_result.any() and radius > 15:
                 resized_result = cv2.resize(
                     cropped_result, (self.out_size, self.out_size)
                 )
@@ -87,16 +94,14 @@ class CharacterSegmenter:
                 )
 
             if result.any() and self.debug:
-                cv2.circle(
-                    image, (int(circle_x), int(circle_y)), int(radius), (0, 255, 0), 2
-                )
+                cv2.circle(image, (int(circle_x), int(circle_y)), int(radius), 127, 2)
                 cv2.putText(
                     image,
                     f"#{label}",
                     (int(circle_x) - 10, int(circle_y)),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.6,
-                    (0, 0, 255),
+                    70,
                     2,
                 )
 
@@ -104,7 +109,9 @@ class CharacterSegmenter:
         sorted_characters = list(map(lambda x: x[1], characters))
 
         if self.debug and self.name and self.parent_name:
-            debug_path = pathlib.Path(f"{DEBUG_CHARACTER_SEGMENT_PATH}/{self.name}.png")
+            debug_path = pathlib.Path(
+                f"{DEBUG_CHARACTER_SEGMENT_PATH}/{self.name}_{i}.png"
+            )
             debug_path.parents[0].mkdir(parents=True, exist_ok=True)
             cv2.imwrite(str(debug_path), image)
 
