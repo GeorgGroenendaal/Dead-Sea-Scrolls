@@ -4,6 +4,7 @@
 
 - Python ^3.8 and < 3.11
 - (Optional) [Poetry](https://python-poetry.org/) for dependencies
+- (Optional) Git LFS so training data. (See [Git Large File Storage](https://git-lfs.github.com/) 
 
 For development
 - (Optionally) Docker 
@@ -15,6 +16,9 @@ For development
     # or using poetry
     poetry install
     poetry shell
+
+    # optionally to get the files (not needed for inference)
+    git lfs pull
 
 
 ### Performing full pipeline
