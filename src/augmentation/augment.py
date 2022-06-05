@@ -1,15 +1,16 @@
 import hashlib
+import pathlib
 from glob import glob
-from typing import Dict, List, Set, Tuple
+from typing import Callable, Dict, List, Set, Tuple
 
 import cv2
-from cv2 import Mat
 import numpy as np
+import random
+from cv2 import Mat
 
 from src.utils.images import get_name, get_parent_name
 from src.utils.logger import logger
 from src.utils.paths import CHARACTER_TRAIN_AUGMENTED_PATH, CHARACTER_TRAIN_PATH
-import pathlib
 
 
 def _load_characters(path: str, extension: str = "pgm") -> List[Tuple[str, str, Mat]]:
@@ -27,9 +28,8 @@ def _load_characters(path: str, extension: str = "pgm") -> List[Tuple[str, str, 
     return result
 
 
-# return a random function that will perform the given operation on the image
-def _get_random_operation():
-    return np.random.choice(
+def _get_random_operation() -> Callable[[np.ndarray, int, int], np.ndarray]:
+    return random.choice(
         [
             _erosion,
             _dilation,
@@ -40,12 +40,9 @@ def _get_random_operation():
 
 def augment(resize_size: int) -> None:
     characters = _load_characters(CHARACTER_TRAIN_PATH)
-    # class_weights = _gen_class_weights(characters)
-    # print(f"class is {class_weights} en len is {len(class_weights)}")
-    # return
-
     n_classes: Dict[str, int] = {}
     augment_size = 300
+
     for character_name, _, _ in characters:
         value = n_classes.get(character_name, 0)
         n_classes[character_name] = value + 1
@@ -86,7 +83,7 @@ def _dilation(image: np.ndarray, iterations: int, dilation_size: int) -> np.ndar
     return cv2.dilate(image, elements, iterations=iterations)
 
 
-def _shear(image: np.ndarray, iterations: int, shear_size: int) -> np.ndarray:
+def _shear(image: np.ndarray, _: int, shear_size: int) -> np.ndarray:
     return cv2.warpPerspective(
         image,
         _get_shear_matrix(shear_size),
@@ -95,7 +92,7 @@ def _shear(image: np.ndarray, iterations: int, shear_size: int) -> np.ndarray:
 
 
 def _get_shear_matrix(shear_size: int) -> np.ndarray:
-    return np.float32([[1, 0.5, 0], [0, 1, 0], [0, 0, 1]])
+    return np.array([[1, 0.5, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32)
 
 
 def _deduplicate_paths(paths: List[str]) -> List[str]:
